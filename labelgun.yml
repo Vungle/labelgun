@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: labelgun
+spec:
+  template:
+    metadata:
+      labels:
+        app: labelgun
+      name: labelgun
+    spec:
+      containers:
+      - image: vungle/labelgun
+        imagePullPolicy: Always
+        name: labelgun
+        env:
+          - name: KUBE_MASTER
+            value: "172.16.31.10:8080"
+
