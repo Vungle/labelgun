@@ -1,0 +1,14 @@
+#!/bin/bash
+ACCOUNT=vungle
+APP=labelgun
+docker run --rm -it -v "$PWD":/go/src/github.com/$ACCOUNT/$APP -w /go/src/github.com/$ACCOUNT/$APP/ golang:1.4.2-cross sh -c '
+go get
+for GOOS in darwin linux windows; do
+  for GOARCH in amd64 386; do
+    echo "Building $GOOS-$GOARCH"
+    export GOOS=$GOOS
+    export GOARCH=$GOARCH
+    go build -o bin/$APP-$GOOS-$GOARCH
+  done
+done
+'
