@@ -8,7 +8,8 @@ for GOOS in darwin linux windows; do
     echo "Building $GOOS-$GOARCH"
     export GOOS=$GOOS
     export GOARCH=$GOARCH
-    go build -o bin/$APP-$GOOS-$GOARCH
+    go build -o bin/labelgun-$GOOS-$GOARCH
   done
 done
 '
+docker build -t vungle/labelgun .
