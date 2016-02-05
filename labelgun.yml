@@ -16,4 +16,8 @@ spec:
         env:
           - name: KUBE_MASTER
             value: "172.16.31.10:8080"
+          - name: AWS_REGION
+            value: "us-east-1"
+          - name: LABELGUN_INTERVAL
+            value: "360"
 
