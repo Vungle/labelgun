@@ -51,14 +51,19 @@ func main() {
 		//fmt.Println(resp.Reservations[0].Instances[0].InstanceType)
 		meta = resp.Reservations[0].Instances[0]
 
-		//
-		// Start Labeling
-		//label(get_cores())
-		//label(get_az)
-		value, _ := strconv.Unquote(string(awsutil.Prettify(meta.InstanceType)))
-		label(strings.TrimSpace("InstanceType=" + value))
-		//label_ec2_tags()
+		// Apply Availability Zone
+		availabilityZone, _ := strconv.Unquote(string(awsutil.Prettify(meta.Placement.AvailabilityZone)))
+		label("AvailabilityZone=" + availabilityZone)
 
+		// Apply Instance Type
+		instanceType, _ := strconv.Unquote(string(awsutil.Prettify(meta.InstanceType)))
+		label("InstanceType=" + instanceType)
+
+		// Apply EC2 Tags
+		tags := meta.Tags
+		for _, tag := range tags {
+			label(*tag.Key + "=" + *tag.Value)
+		}
 		// Sleep until interval
 		fmt.Println("Sleeping for " + os.Getenv("LABELGUN_INTERVAL") + " seconds")
 		time.Sleep(time.Duration(interval) * time.Second)
