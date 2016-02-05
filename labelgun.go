@@ -55,7 +55,8 @@ func main() {
 		// Start Labeling
 		//label(get_cores())
 		//label(get_az)
-		label(strings.TrimSpace("InstanceType=" + string(awsutil.Prettify(meta.InstanceType))))
+		value, _ := strconv.Unquote(string(awsutil.Prettify(meta.InstanceType)))
+		label(strings.TrimSpace("InstanceType=" + value))
 		//label_ec2_tags()
 
 		// Sleep until interval
