@@ -1,3 +1,5 @@
+[![](http://badge-imagelayers.iron.io/vungle/labelgun:latest.svg)](http://imagelayers.iron.io/?images=vungle/labelgun:latest 'Get your own badge on imagelayers.iron.io')
+
 # labelgun
 Insert AWS metadata as Kubernetes Labels
 
