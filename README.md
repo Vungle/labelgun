@@ -17,3 +17,8 @@ Edit the labelgun.yml with approriate Environment Variable valuess for `KUBE_MAS
 `kubectl create -f labelgun.yml`
 
 Note: this requries you have DaemonSets enabled https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md
+
+# Known Bugs
+
+No validation of aws tags to node tags ( ex. spaces are not supported in kube tags but they are for aws tags)
+https://github.com/Vungle/labelgun/issues/1
