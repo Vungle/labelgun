@@ -10,7 +10,7 @@ Insert AWS metadata as Kubernetes Labels
 
 # Configure
 
-Edit the labelgun.yml with approriate Environment Variable valuess for `KUBE_MASTER`, `AWS_REGION` and `LABELGUN_INTERVAL` in seconds
+Edit the labelgun.yml with approriate Environment Variable valuess for `KUBE_MASTER`, `AWS_REGION` and `LABELGUN_INTERVAL` in seconds. Set `LABELGUN_SUPPRESS_LOG` to `true` if you do not want to log every activity.
 
 # Launch the DaemonSet
 

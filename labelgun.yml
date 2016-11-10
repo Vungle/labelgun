@@ -10,7 +10,7 @@ spec:
       name: labelgun
     spec:
       containers:
-      - image: vungle/labelgun
+      - image: dailyhotel/labelgun
         imagePullPolicy: Always
         name: labelgun
         env:
@@ -20,4 +20,5 @@ spec:
             value: "us-east-1"
           - name: LABELGUN_INTERVAL
             value: "360"
-
+          - name: LABELGUN_SUPPRESS_LOG
+            value: "false"
