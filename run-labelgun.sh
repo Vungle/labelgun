@@ -1,9 +1,8 @@
 #!/bin/sh
 set -e
 
-if [ "${LABELGUN_SUPPRESS_LOG}" = "true" ]; then
-  labelgun >/dev/null 2>&1
-  exit $?
+if [ -z "${LABELGUN_ERR_THRESHOLD}" ]; then
+  LABELGUN_ERR_THRESHOLD="WARNING"
 fi
 
-labelgun
+labelgun -stderrthreshold="${LABELGUN_ERR_THRESHOLD}"

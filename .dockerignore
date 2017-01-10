@@ -1,0 +1,8 @@
+.git/
+.idea/
+.gitignore
+
+*swp
+/bin
+vender/
+

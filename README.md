@@ -1,4 +1,5 @@
-[![](http://badge-imagelayers.iron.io/vungle/labelgun:latest.svg)](http://imagelayers.iron.io/?images=vungle/labelgun:latest 'Get your own badge on imagelayers.iron.io')
+[![](https://images.microbadger.com/badges/image/dailyhotel/labelgun.svg)](https://microbadger.com/images/dailyhotel/labelgun "Get your own image badge on microbadger.com")
+[![](https://images.microbadger.com/badges/version/dailyhotel/labelgun.svg)](https://microbadger.com/images/dailyhotel/labelgun "Get your own version badge on microbadger.com")
 
 # labelgun
 Insert AWS metadata as Kubernetes Labels
@@ -10,15 +11,32 @@ Insert AWS metadata as Kubernetes Labels
 
 # Configure
 
-Edit the labelgun.yml with approriate Environment Variable valuess for `KUBE_MASTER`, `AWS_REGION` and `LABELGUN_INTERVAL` in seconds. Set `LABELGUN_SUPPRESS_LOG` to `true` if you do not want to log every activity.
+Edit the `labelgun.yml` with appropriate Environment Variable values for [`LABELGUN_ERR_THRESHOLD`](https://godoc.org/github.com/golang/glog) and `LABELGUN_INTERVAL` in seconds.
 
 # Launch the DaemonSet
 
+```yaml
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  namespace: kube-system
+  name: labelgun
+spec:
+  template:
+    metadata:
+      labels:
+        app: labelgun
+      name: labelgun
+    spec:
+      containers:
+      - image: dailyhotel/labelgun
+        name: labelgun
+        env:
+          - name: LABELGUN_ERR_THRESHOLD
+            value: "ERROR"
+```
+
 `kubectl create -f labelgun.yml`
 
-Note: this requries you have DaemonSets enabled https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md
+Note: this requires you have DaemonSets enabled https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md
 
-# Known Bugs
-
-No validation of aws tags to node tags ( ex. spaces are not supported in kube tags but they are for aws tags)
-https://github.com/Vungle/labelgun/issues/1

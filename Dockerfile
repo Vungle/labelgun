@@ -1,5 +1,6 @@
 FROM alpine
 
+# See https://hub.docker.com/r/lachlanevenson/k8s-kubectl/~/dockerfile/
 ARG VCS_REF
 ARG BUILD_DATE
 
@@ -10,7 +11,7 @@ LABEL org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.docker.dockerfile="/Dockerfile"
 
 # Install kubectl
-ENV KUBE_LATEST_VERSION="v1.4.4"
+ENV KUBE_LATEST_VERSION="v1.5.1"
 
 RUN apk add --update ca-certificates curl \
  && curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
