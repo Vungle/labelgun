@@ -14,16 +14,16 @@ This is the improved version of [Vungle/labelgun](https://github.com/Vungle/labe
 * Private base image Vungle/kubectl is removed
 * Better developer support using `Makefile` and `glide.yaml`
 
-### Supported:
+## Supported:
 
 * ec2tags
 * ~~availability zone~~ and ~~instance type~~ are not supported any more since [Kubernetes itself provides the both](https://kubernetes.io/docs/admin/multiple-zones/).
 
-# Configure
+## Configure
 
 Edit the `labelgun.yml` with appropriate Environment Variable values for [`LABELGUN_ERR_THRESHOLD`](https://godoc.org/github.com/golang/glog) and `LABELGUN_INTERVAL` in seconds.
 
-# Launch the DaemonSet
+## Launch the DaemonSet
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -50,4 +50,12 @@ spec:
 
 `kubectl create -f labelgun.yml`
 
+## Develop
 
+``` bash
+go get github.com/dailyhotel/labelgun
+
+glide install --strip-vendor --strip-vcs
+
+make
+```
