@@ -1,0 +1,10 @@
+language: go
+go:
+  - 1.7.4
+services:
+  - docker
+before_install:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+install:
+  - go get github.com/Masterminds/glide
+  - glide install --strip-vendor --strip-vcs

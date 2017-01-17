@@ -2,7 +2,25 @@ package: labelgun
 import:
 # - package: k8s.io/kubernetes
 #   version: v1.3.4
+#- package: k8s.io/kubernetes
+#  version: 6b9a9442855d16e0ff0c02ab0c82b1c1665cccaf
+#  subpackages:
+#  - pkg/genericapiserver
+- package: k8s.io/client-go
+  version: ^2.0.0-alpha.0
+  subpackages:
+  - 1.5/dynamic
+  - 1.5/kubernetes
+  - 1.5/kubernetes/typed/extensions/v1beta1
+  - 1.5/pkg/api
+  - 1.5/pkg/api/v1
+  - 1.5/pkg/api/unversioned
+  - 1.5/pkg/apis/extensions/v1beta1
+  - 1.5/pkg/runtime
+  - 1.5/pkg/util/intstr
+  - 1.5/pkg/watch
+  - 1.5/tools/clientcmd
 - package: github.com/aws/aws-sdk-go
   version: v1.6.10
-- package: github.com/codeskyblue/go-sh
-- package: github.com/golang/glog
+#- package: github.com/codeskyblue/go-sh
+#- package: github.com/golang/glog

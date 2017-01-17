@@ -4,26 +4,26 @@ import (
 	"flag"
 	"os"
 	"strconv"
-	"strings"
 	"time"
+
+	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/codeskyblue/go-sh"
 	log "github.com/golang/glog"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"fmt"
-	"bytes"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/rest"
 )
 
-var node string
-
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: labelgun -stderrthreshold=[INFO|WARN|FATAL]\n", )
+	fmt.Fprintf(os.Stderr, "usage: labelgun -stderrthreshold=[INFO|WARN|FATAL]\n")
 	flag.PrintDefaults()
 	os.Exit(2)
 }
@@ -35,14 +35,6 @@ func init() {
 	flag.Parse()
 }
 
-func errThreshold() string {
-	errThreshold := os.Getenv("LABELGUN_ERR_THRESHOLD")
-	if errThreshold == "" {
-		return "INFO"
-	}
-	return errThreshold
-}
-
 func interval() int64 {
 	val, _ := strconv.ParseInt(os.Getenv("LABELGUN_INTERVAL"), 10, 64)
 	if val == 0 {
@@ -52,15 +44,18 @@ func interval() int64 {
 }
 
 func main() {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
 	for {
-		// Get Kube Node name
-		n, err := sh.Command("kubectl", "describe", "pod", os.Getenv("HOSTNAME")).Command("grep", "Node").Command("awk", "{print $2}").Command("sed", "s@/.*@@").Output()
+		// Get Kube Nodes
+		clientset := kubeClient(config)
+		nodes, err := clientset.CoreV1().Nodes().List(v1.ListOptions{})
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(err.Error())
 		}
-		node = string(n)
-		node = strings.TrimSpace(node)
-		log.Infoln(node)
 
 		// Get EC2 metadata
 		metadata := ec2metadata.New(session.New())
@@ -69,21 +64,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to retrieve the region from the EC2 instance %v\n", err)
 		}
-
-		doc, err := metadata.GetInstanceIdentityDocument()
-		if err != nil {
-			log.Fatalf("Unable to retrieve the metadata from the EC2 instance %v\n", err)
-		}
-
-		// Apply Availability Zone
-		availabilityZone, _ := strconv.Unquote(string(awsutil.Prettify(doc.AvailabilityZone)))
-		go label(node,"AvailabilityZone", availabilityZone)
-		log.Infoln(availabilityZone)
-
-		// Apply Instance Type
-		instanceType, _ := strconv.Unquote(string(awsutil.Prettify(doc.InstanceType)))
-		go label(node,"InstanceType", instanceType)
-		log.Infoln(instanceType)
 
 		creds := credentials.NewChainCredentials(
 			[]credentials.Provider{
@@ -102,40 +82,62 @@ func main() {
 
 		svc := ec2.New(sess)
 
-		// Here we create an input that will filter any instances that aren't either
-		// of these two states. This is generally what we want
-		params := &ec2.DescribeInstancesInput{
-			Filters: []*ec2.Filter{
-				&ec2.Filter{
-					Name: aws.String("instance-id"),
-					Values: []*string{
-						&doc.InstanceID,
+		for _, node := range nodes.Items {
+
+			// Here we create an input that will filter any instances that aren't either
+			// of these two states. This is generally what we want
+			params := &ec2.DescribeInstancesInput{
+				Filters: []*ec2.Filter{
+					&ec2.Filter{
+						Name: aws.String("private-dns-name"),
+						Values: []*string{
+							&node.Name,
+						},
 					},
 				},
-			},
-		}
+			}
 
-		resp, _ := svc.DescribeInstances(params)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if len(resp.Reservations) < 1 || len(resp.Reservations[0].Instances) < 1 {
-			// Might due to "Request body type has been overwritten. May cause race conditions"
-			next(interval())
-			break;
-		}
+			resp, _ := svc.DescribeInstances(params)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if len(resp.Reservations) < 1 || len(resp.Reservations[0].Instances) < 1 {
+				// Might due to "Request body type has been overwritten. May cause race conditions"
+				next(interval())
+				break
+			}
 
-		// Apply EC2 Tags
-		inst := resp.Reservations[0].Instances[0];
-		for _, keys := range inst.Tags {
-			tagKey, _ := strconv.Unquote(string(awsutil.Prettify(*keys.Key)))
-			tagValue, _ := strconv.Unquote(string(awsutil.Prettify(*keys.Value)))
-			go label(node, tagKey, tagValue)
-		}
+			// Apply EC2 Tags
+			nodeName := node.Name
+			inst := resp.Reservations[0].Instances[0]
 
+			for _, keys := range inst.Tags {
+				tagKey := tagToLabel(*keys.Key)
+				tagValue := tagToLabel(*keys.Value)
+
+				if tagKey == "" || tagValue == "" {
+					continue
+				}
+
+				label(nodeName, tagKey, tagValue)
+			}
+		}
 		// Sleep until interval
 		next(interval())
 	}
+}
+
+func tagToLabel(item string) string {
+	parsed, err := strconv.Unquote(string(awsutil.Prettify(item)))
+	if err != nil {
+		log.Error(err)
+		return ""
+	}
+	parsed = strings.Replace(parsed, ":", ".", -1)
+	if len(parsed) > 63 {
+		return ""
+	}
+	return parsed
 }
 
 func next(interval int64) {
@@ -143,23 +145,34 @@ func next(interval int64) {
 	time.Sleep(time.Duration(interval) * time.Second)
 }
 
-func label(node string, label_key string, label_value string) {
-	if node == "" {
-		log.Fatalf("node is empty!")
-	}
+func label(nodeName string, tagKey string, tagValue string) {
+	log.Infoln(fmt.Sprintf("kubectl node %s %s=%s", nodeName, tagKey, tagValue))
 
-	session := sh.NewSession()
-	if strings.EqualFold(errThreshold(), "INFO") {
-		session.ShowCMD = true
-	} else {
-		var outbuf, errbuf bytes.Buffer
-		session.Stdout = &outbuf
-		session.Stderr = &errbuf
-	}
-
-	_, err := session.Command("kubectl", "label", "node", node, label_key+"="+label_value, "--overwrite").Output()
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		log.Warningln("oops, something was too hard", err)
-		return
+		log.Fatalf(err.Error())
 	}
+
+	clientset := kubeClient(config)
+	node, err := clientset.CoreV1().Nodes().Get(nodeName)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	labels := node.GetLabels()
+	labels[tagKey] = tagValue
+
+	_, err = clientset.CoreV1().Nodes().Update(node)
+	if err != nil {
+		log.Error(err)
+	}
+}
+
+func kubeClient(config *rest.Config) *kubernetes.Clientset {
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	return clientset
 }
