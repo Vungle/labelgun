@@ -8,3 +8,5 @@ before_install:
 install:
   - go get github.com/Masterminds/glide
   - glide install --strip-vendor
+notifications:
+  slack: yanoljain:2Hwycz70X0auEzw18PZTIYCE
