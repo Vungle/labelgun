@@ -1,24 +1,61 @@
-[![](http://badge-imagelayers.iron.io/vungle/labelgun:latest.svg)](http://imagelayers.iron.io/?images=vungle/labelgun:latest 'Get your own badge on imagelayers.iron.io')
+[![](https://images.microbadger.com/badges/image/dailyhotel/labelgun.svg)](https://microbadger.com/images/dailyhotel/labelgun "Get your own image badge on microbadger.com")
+[![](https://images.microbadger.com/badges/version/dailyhotel/labelgun.svg)](https://microbadger.com/images/dailyhotel/labelgun "Get your own version badge on microbadger.com")
+[![Build Status](https://travis-ci.org/DailyHotel/labelgun.svg?branch=master)](https://travis-ci.org/DailyHotel/labelgun)
 
 # labelgun
-Insert AWS metadata as Kubernetes Labels
 
-### Supported:
+**Insert AWS EC2 Tags as Kubernetes Node Labels.** 
+
+This is the improved version of [Vungle/labelgun](https://github.com/Vungle/labelgun) in several aspects:
+
+* [DaemonSet](https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md) is not required. Just launch a single pod and save the rest of your computational resources.
+* Kubernetes version v1.5.x is supported
+* Fine-grained logging
+* Private base image Vungle/kubectl is removed
+* Better developer support using `Makefile` and `glide.yaml`
+
+## Supported:
+
 * ec2tags
-* availability zone
-* instance type
+* ~~availability zone~~ and ~~instance type~~ are not supported any more since [Kubernetes itself provides the both](https://kubernetes.io/docs/admin/multiple-zones/).
 
-# Configure
+## Configure
 
-Edit the labelgun.yml with approriate Environment Variable valuess for `KUBE_MASTER`, `AWS_REGION` and `LABELGUN_INTERVAL` in seconds
+Edit the `labelgun.yml` with appropriate Environment Variable values for [`LABELGUN_ERR_THRESHOLD`](https://godoc.org/github.com/golang/glog) and `LABELGUN_INTERVAL` in seconds.
 
-# Launch the DaemonSet
+## Launch the DaemonSet
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: labelgun
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: labelgun 
+    spec:
+      containers:
+        - image: dailyhotel/labelgun:latest
+          imagePullPolicy: Always
+          name: labelgun
+          env:
+            - name: LABELGUN_ERR_THRESHOLD
+              value: "INFO"
+            - name: LABELGUN_INTERVAL
+              value: "60"
+```
 
 `kubectl create -f labelgun.yml`
 
-Note: this requries you have DaemonSets enabled https://github.com/kubernetes/kubernetes/blob/master/docs/design/daemon.md
+## Develop
 
-# Known Bugs
+``` bash
+go get github.com/dailyhotel/labelgun
 
-No validation of aws tags to node tags ( ex. spaces are not supported in kube tags but they are for aws tags)
-https://github.com/Vungle/labelgun/issues/1
+glide install --strip-vendor --strip-vcs
+
+make
+```

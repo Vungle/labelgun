@@ -1,0 +1,13 @@
+language: go
+go:
+  - 1.7.4
+services:
+  - docker
+before_install:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+install:
+  - go get github.com/Masterminds/glide
+  - glide install --strip-vendor
+notifications:
+  slack: 
+    secure: "qy9cfYZnAjnNZtWVk2t6JU0WjM08Pej8eWEyn863JzWJlZB4Ocq8PZ7MSswrnEzMF9b6H7W/2JerpVpjMusAw28qsDdsu/TzpPtAPIze1wcuDcHK5SRdHq1xrNT4rB4YEga67I24EwHXVjrorK1ZQcEpM815zNe7g+ptSnA/xle5AssHry3VPiMbiHdG6HYulQOwTntADytxKyX9Bo4dzbQ3bJbqXq6afvKbJGIOZN6FJrNatdVMcATe1aCcWAPyFH+rqAnVY766MLDV7Pnh2fMm4tlnU3IAe8QAQqeNF+58GG/KQKiqLdoufhEyO5q2RF/jUdyhVEnC7lTI/JokVCAjMzjAPJ09n6CZUjvFnaDA9keBCmZ4qkLyVAyO383PnueKdFCq8ELFoyMtvlreuChZLn4Q8mpcbBoV8flqo8UGSvvlJWzpbUW4YX/vzV1zGfoIF6908fplOP5VfDoaG1vzk4P+gyn9KnhmUeKmtkJYj9C6aHQZtfxqeSwaF2I5jWt0Ps+lno1HyZlvh9e9H1u7JSYT4VBwNg1n25uDQ4c7F3rhy9VtyEFamQeAkN2Onn5EYGOoY2Fmt4oZ9lbJ5G5iVFzdaAcOg9Pw+TARCj9xhRm/AAmWix0FZWVM2vDJb5IOGvr51j163BcI0EhkBLQc5PckpUJmqAdjyRw4FOQ="
